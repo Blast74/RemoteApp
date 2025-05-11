@@ -6,11 +6,11 @@ namespace RemoteDesktopCommon.Config
 {
     public class AppSettings
     {
-        public NetworkSettings Network { get; set; } = new NetworkSettings();
-        public SecuritySettings Security { get; set; } = new SecuritySettings();
-        public StreamSettings Stream { get; set; } = new StreamSettings();
-        public LoggingSettings Logging { get; set; } = new LoggingSettings();
-        public AuthenticationSettings Authentication { get; set; } = new AuthenticationSettings();
+        public NetworkSettings Network { get; set; } = new();
+        public SecuritySettings Security { get; set; } = new();
+        public StreamSettings Stream { get; set; } = new();
+        public LoggingSettings Logging { get; set; } = new();
+        public AuthenticationSettings Authentication { get; set; } = new();
 
         public class NetworkSettings
         {
@@ -37,17 +37,16 @@ namespace RemoteDesktopCommon.Config
 
         public class SecuritySettings
         {
-            [Required]
-            public string EncryptionKey { get; set; }
+            public string EncryptionKey { get; set; } = string.Empty;
 
             public bool RequireEncryption { get; set; } = true;
 
             [Range(128, 256)]
             public int KeySize { get; set; } = 256;
 
-            public string CertificatePath { get; set; }
+            public string CertificatePath { get; set; } = string.Empty;
 
-            public string CertificatePassword { get; set; }
+            public string CertificatePassword { get; set; } = string.Empty;
 
             public bool ValidateCertificates { get; set; } = true;
         }
@@ -98,8 +97,7 @@ namespace RemoteDesktopCommon.Config
 
         public class AuthenticationSettings
         {
-            [Required]
-            public string JwtSecret { get; set; }
+            public string JwtSecret { get; set; } = string.Empty;
 
             [Range(1, 24)]
             public int TokenExpirationHours { get; set; } = 12;
@@ -110,51 +108,51 @@ namespace RemoteDesktopCommon.Config
 
             public bool AllowCertificateAuth { get; set; } = true;
 
-            public OAuthSettings OAuth { get; set; } = new OAuthSettings();
+            public OAuthSettings OAuth { get; set; } = new();
 
-            public LdapSettings Ldap { get; set; } = new LdapSettings();
+            public LdapSettings Ldap { get; set; } = new();
         }
 
         public class OAuthSettings
         {
             public bool Enabled { get; set; } = false;
 
-            public GoogleOAuthSettings Google { get; set; } = new GoogleOAuthSettings();
-            public MicrosoftOAuthSettings Microsoft { get; set; } = new MicrosoftOAuthSettings();
-            public GitHubOAuthSettings GitHub { get; set; } = new GitHubOAuthSettings();
+            public GoogleOAuthSettings Google { get; set; } = new();
+            public MicrosoftOAuthSettings Microsoft { get; set; } = new();
+            public GitHubOAuthSettings GitHub { get; set; } = new();
         }
 
         public class GoogleOAuthSettings
         {
             public bool Enabled { get; set; } = false;
-            public string ClientId { get; set; }
-            public string ClientSecret { get; set; }
+            public string ClientId { get; set; } = string.Empty;
+            public string ClientSecret { get; set; } = string.Empty;
         }
 
         public class MicrosoftOAuthSettings
         {
             public bool Enabled { get; set; } = false;
-            public string ClientId { get; set; }
-            public string ClientSecret { get; set; }
-            public string TenantId { get; set; }
+            public string ClientId { get; set; } = string.Empty;
+            public string ClientSecret { get; set; } = string.Empty;
+            public string TenantId { get; set; } = string.Empty;
         }
 
         public class GitHubOAuthSettings
         {
             public bool Enabled { get; set; } = false;
-            public string ClientId { get; set; }
-            public string ClientSecret { get; set; }
+            public string ClientId { get; set; } = string.Empty;
+            public string ClientSecret { get; set; } = string.Empty;
         }
 
         public class LdapSettings
         {
             public bool Enabled { get; set; } = false;
-            public string Server { get; set; }
+            public string Server { get; set; } = string.Empty;
             public int Port { get; set; } = 389;
             public bool UseSsl { get; set; } = true;
-            public string BaseDn { get; set; }
-            public string BindDn { get; set; }
-            public string BindPassword { get; set; }
+            public string BaseDn { get; set; } = string.Empty;
+            public string BindDn { get; set; } = string.Empty;
+            public string BindPassword { get; set; } = string.Empty;
             public string UserFilter { get; set; } = "(objectClass=person)";
             public bool EnableCache { get; set; } = true;
             public int CacheExpirationMinutes { get; set; } = 30;
@@ -168,7 +166,8 @@ namespace RemoteDesktopCommon.Config
 
         public static AppSettings LoadFromJson(string json)
         {
-            var settings = JsonConvert.DeserializeObject<AppSettings>(json);
+            var settings = JsonConvert.DeserializeObject<AppSettings>(json) 
+                ?? throw new JsonSerializationException("Failed to deserialize AppSettings");
             settings.Validate();
             return settings;
         }

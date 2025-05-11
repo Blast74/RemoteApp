@@ -22,42 +22,46 @@ namespace RemoteDesktopCommon.Security
 
         public AuthenticationManager(ILogger<AuthenticationManager> logger, string jwtSecret)
         {
-            _logger = logger;
-            _jwtSecret = jwtSecret;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _jwtSecret = jwtSecret ?? throw new ArgumentNullException(nameof(jwtSecret));
             _activeSessions = new ConcurrentDictionary<string, UserSession>();
             _revokedTokens = new ConcurrentDictionary<string, DateTime>();
         }
 
         public async Task<AuthenticationResult> AuthenticateAsync(AuthenticationRequest request)
         {
+            ArgumentNullException.ThrowIfNull(request);
+
             try
             {
-                switch (request.Method)
+                return request.Method switch
                 {
-                    case AuthenticationMethod.Password:
-                        return await ValidatePasswordAsync(request);
-                    case AuthenticationMethod.Certificate:
-                        return await ValidateCertificateAsync(request);
-                    case AuthenticationMethod.OAuth:
-                        return await ValidateOAuthTokenAsync(request);
-                    case AuthenticationMethod.TOTP:
-                        return await ValidateTOTPAsync(request);
-                    default:
-                        throw new NotSupportedException($"Authentication method {request.Method} not supported");
-                }
+                    AuthenticationMethod.Password => await ValidatePasswordAsync(request),
+                    AuthenticationMethod.Certificate => await ValidateCertificateAsync(request),
+                    AuthenticationMethod.OAuth => await ValidateOAuthTokenAsync(request),
+                    AuthenticationMethod.TOTP => await ValidateTOTPAsync(request),
+                    _ => AuthenticationResult.CreateFailed("Authentication method not supported")
+                };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Authentication failed");
-                return new AuthenticationResult { Success = false, ErrorMessage = "Authentication failed" };
+                return AuthenticationResult.CreateFailed("Authentication failed due to an internal error");
             }
         }
 
         private async Task<AuthenticationResult> ValidatePasswordAsync(AuthenticationRequest request)
         {
+            if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
+            {
+                return AuthenticationResult.CreateFailed("Username and password are required");
+            }
+
             // In a real implementation, this would validate against a secure database
-            // For demo purposes, we're using a simple hash comparison
             var hashedPassword = HashPassword(request.Password, request.Username);
+            
+            // Simulate async database lookup
+            await Task.Delay(100);
             
             // TODO: Compare with stored hash from database
             var isValid = true; // Placeholder
@@ -66,34 +70,32 @@ namespace RemoteDesktopCommon.Security
             {
                 var token = GenerateJwtToken(request.Username);
                 var session = CreateSession(request.Username, token);
-                return new AuthenticationResult
-                {
-                    Success = true,
-                    Token = token,
-                    SessionId = session.SessionId
-                };
+                return AuthenticationResult.CreateSuccess(token, session.SessionId);
             }
 
-            return new AuthenticationResult { Success = false, ErrorMessage = "Invalid credentials" };
+            return AuthenticationResult.CreateFailed("Invalid credentials");
         }
 
         private async Task<AuthenticationResult> ValidateCertificateAsync(AuthenticationRequest request)
         {
+            if (request.CertificateData == null || request.CertificateData.Length == 0)
+            {
+                return AuthenticationResult.CreateFailed("Certificate data is required");
+            }
+
             try
             {
-                var cert = new X509Certificate2(request.CertificateData);
+                // Simulate async certificate validation
+                await Task.Delay(100);
+
+                using var cert = new X509Certificate2(request.CertificateData);
                 
                 // Verify certificate is valid and trusted
                 if (cert.Verify())
                 {
                     var token = GenerateJwtToken(cert.Subject);
                     var session = CreateSession(cert.Subject, token);
-                    return new AuthenticationResult
-                    {
-                        Success = true,
-                        Token = token,
-                        SessionId = session.SessionId
-                    };
+                    return AuthenticationResult.CreateSuccess(token, session.SessionId);
                 }
             }
             catch (Exception ex)
@@ -101,53 +103,53 @@ namespace RemoteDesktopCommon.Security
                 _logger.LogError(ex, "Certificate validation failed");
             }
 
-            return new AuthenticationResult { Success = false, ErrorMessage = "Invalid certificate" };
+            return AuthenticationResult.CreateFailed("Invalid certificate");
         }
 
         private async Task<AuthenticationResult> ValidateOAuthTokenAsync(AuthenticationRequest request)
         {
+            if (string.IsNullOrEmpty(request.OAuthToken))
+            {
+                return AuthenticationResult.CreateFailed("OAuth token is required");
+            }
+
+            // Simulate async OAuth validation
+            await Task.Delay(100);
+
             // In a real implementation, this would validate with the OAuth provider
-            // For demo purposes, we're assuming the token is valid
             var isValid = true; // Placeholder
             
             if (isValid)
             {
-                var token = GenerateJwtToken(request.Username);
-                var session = CreateSession(request.Username, token);
-                return new AuthenticationResult
-                {
-                    Success = true,
-                    Token = token,
-                    SessionId = session.SessionId
-                };
+                var token = GenerateJwtToken(request.Username ?? "oauth_user");
+                var session = CreateSession(request.Username ?? "oauth_user", token);
+                return AuthenticationResult.CreateSuccess(token, session.SessionId);
             }
 
-            return new AuthenticationResult { Success = false, ErrorMessage = "Invalid OAuth token" };
+            return AuthenticationResult.CreateFailed("Invalid OAuth token");
         }
 
         private async Task<AuthenticationResult> ValidateTOTPAsync(AuthenticationRequest request)
         {
             if (string.IsNullOrEmpty(request.TOTPCode))
             {
-                return new AuthenticationResult { Success = false, ErrorMessage = "TOTP code required" };
+                return AuthenticationResult.CreateFailed("TOTP code required");
             }
+
+            // Simulate async TOTP validation
+            await Task.Delay(100);
 
             // In a real implementation, this would validate against stored TOTP secret
             var isValid = ValidateTOTPCode(request.TOTPCode, "user_secret_key"); // Placeholder
 
             if (isValid)
             {
-                var token = GenerateJwtToken(request.Username);
-                var session = CreateSession(request.Username, token);
-                return new AuthenticationResult
-                {
-                    Success = true,
-                    Token = token,
-                    SessionId = session.SessionId
-                };
+                var token = GenerateJwtToken(request.Username ?? "totp_user");
+                var session = CreateSession(request.Username ?? "totp_user", token);
+                return AuthenticationResult.CreateSuccess(token, session.SessionId);
             }
 
-            return new AuthenticationResult { Success = false, ErrorMessage = "Invalid TOTP code" };
+            return AuthenticationResult.CreateFailed("Invalid TOTP code");
         }
 
         private string GenerateJwtToken(string username)
@@ -186,52 +188,46 @@ namespace RemoteDesktopCommon.Security
             return session;
         }
 
-        private string HashPassword(string password, string salt)
+        private static string HashPassword(string password, string salt)
         {
-            using (var sha256 = SHA256.Create())
-            {
-                var saltedPassword = $"{password}{salt}";
-                var bytes = Encoding.UTF8.GetBytes(saltedPassword);
-                var hash = sha256.ComputeHash(bytes);
-                return Convert.ToBase64String(hash);
-            }
+            using var sha256 = SHA256.Create();
+            var saltedPassword = $"{password}{salt}";
+            var bytes = Encoding.UTF8.GetBytes(saltedPassword);
+            var hash = sha256.ComputeHash(bytes);
+            return Convert.ToBase64String(hash);
         }
 
         private bool ValidateTOTPCode(string code, string secretKey)
         {
             // In a real implementation, this would use a proper TOTP algorithm
-            // For demo purposes, we're using a simple time-based comparison
             var currentInterval = DateTimeOffset.UtcNow.ToUnixTimeSeconds() / (long)_totpTimeStep.TotalSeconds;
             var expectedCode = GenerateTOTPCode(secretKey, currentInterval);
             return code == expectedCode;
         }
 
-        private string GenerateTOTPCode(string secretKey, long interval)
+        private static string GenerateTOTPCode(string secretKey, long interval)
         {
             // This is a simplified TOTP implementation
-            // In production, use a proper TOTP library
-            using (var hmac = new HMACSHA1(Encoding.ASCII.GetBytes(secretKey)))
+            using var hmac = new HMACSHA1(Encoding.ASCII.GetBytes(secretKey));
+            var intervalBytes = BitConverter.GetBytes(interval);
+            if (BitConverter.IsLittleEndian)
             {
-                var intervalBytes = BitConverter.GetBytes(interval);
-                if (BitConverter.IsLittleEndian)
-                {
-                    Array.Reverse(intervalBytes);
-                }
-                var hash = hmac.ComputeHash(intervalBytes);
-                var offset = hash[hash.Length - 1] & 0xf;
-                var binary =
-                    ((hash[offset] & 0x7f) << 24) |
-                    ((hash[offset + 1] & 0xff) << 16) |
-                    ((hash[offset + 2] & 0xff) << 8) |
-                    (hash[offset + 3] & 0xff);
-                var otp = binary % 1000000;
-                return otp.ToString("D6");
+                Array.Reverse(intervalBytes);
             }
+            var hash = hmac.ComputeHash(intervalBytes);
+            var offset = hash[hash.Length - 1] & 0xf;
+            var binary =
+                ((hash[offset] & 0x7f) << 24) |
+                ((hash[offset + 1] & 0xff) << 16) |
+                ((hash[offset + 2] & 0xff) << 8) |
+                (hash[offset + 3] & 0xff);
+            var otp = binary % 1000000;
+            return otp.ToString("D6");
         }
 
         public bool ValidateToken(string token)
         {
-            if (_revokedTokens.ContainsKey(token))
+            if (string.IsNullOrEmpty(token) || _revokedTokens.ContainsKey(token))
             {
                 return false;
             }
@@ -259,35 +255,52 @@ namespace RemoteDesktopCommon.Security
 
         public void RevokeToken(string token)
         {
-            _revokedTokens.TryAdd(token, DateTime.UtcNow);
+            if (!string.IsNullOrEmpty(token))
+            {
+                _revokedTokens.TryAdd(token, DateTime.UtcNow);
+            }
         }
 
         private class UserSession
         {
-            public string SessionId { get; set; }
-            public string Username { get; set; }
-            public string Token { get; set; }
-            public DateTime Created { get; set; }
+            public required string SessionId { get; init; }
+            public required string Username { get; init; }
+            public required string Token { get; init; }
+            public DateTime Created { get; init; }
             public DateTime LastActivity { get; set; }
         }
     }
 
     public class AuthenticationRequest
     {
-        public string Username { get; set; }
-        public string Password { get; set; }
+        public string? Username { get; set; }
+        public string? Password { get; set; }
         public AuthenticationMethod Method { get; set; }
-        public byte[] CertificateData { get; set; }
-        public string OAuthToken { get; set; }
-        public string TOTPCode { get; set; }
+        public byte[]? CertificateData { get; set; }
+        public string? OAuthToken { get; set; }
+        public string? TOTPCode { get; set; }
     }
 
     public class AuthenticationResult
     {
-        public bool Success { get; set; }
-        public string Token { get; set; }
-        public string SessionId { get; set; }
-        public string ErrorMessage { get; set; }
+        private AuthenticationResult(bool isSuccess, string token, string sessionId, string errorMessage)
+        {
+            IsSuccess = isSuccess;
+            Token = token;
+            SessionId = sessionId;
+            ErrorMessage = errorMessage;
+        }
+
+        public bool IsSuccess { get; }
+        public string Token { get; }
+        public string SessionId { get; }
+        public string ErrorMessage { get; }
+
+        public static AuthenticationResult CreateSuccess(string token, string sessionId) =>
+            new(true, token, sessionId, string.Empty);
+
+        public static AuthenticationResult CreateFailed(string errorMessage) =>
+            new(false, string.Empty, string.Empty, errorMessage);
     }
 
     public enum AuthenticationMethod
