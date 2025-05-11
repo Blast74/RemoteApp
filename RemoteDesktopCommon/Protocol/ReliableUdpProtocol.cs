@@ -12,22 +12,22 @@ namespace RemoteDesktopCommon.Protocol
     public class ReliableUdpProtocol : IDisposable
     {
         private readonly ILogger<ReliableUdpProtocol> _logger;
-        private readonly UdpClient _udpClient;
         private readonly ConcurrentDictionary<int, PendingPacket> _pendingPackets;
         private readonly ConcurrentDictionary<string, SessionState> _sessions;
         private readonly CancellationTokenSource _cancellationTokenSource;
         
+        private UdpClient? _udpClient;
+        private TcpListener? _tcpListener;
+        private TcpClient? _tcpClient;
         private bool _useTcpFallback;
-        private TcpListener _tcpListener;
-        private TcpClient _tcpClient;
         private double _packetLossRate;
 
-        public event EventHandler<Packet> PacketReceived;
-        public event EventHandler<string> ConnectionStateChanged;
+        public event EventHandler<Packet>? PacketReceived;
+        public event EventHandler<string>? ConnectionStateChanged;
 
         public ReliableUdpProtocol(ILogger<ReliableUdpProtocol> logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _pendingPackets = new ConcurrentDictionary<int, PendingPacket>();
             _sessions = new ConcurrentDictionary<string, SessionState>();
             _cancellationTokenSource = new CancellationTokenSource();
@@ -47,6 +47,9 @@ namespace RemoteDesktopCommon.Protocol
                 _ = StartMaintenanceLoop();
 
                 _logger.LogInformation($"Server started on port {port}");
+                
+                // Wait for initialization to complete
+                await Task.Delay(100);
             }
             catch (Exception ex)
             {
@@ -60,12 +63,19 @@ namespace RemoteDesktopCommon.Protocol
             try
             {
                 _udpClient = new UdpClient();
-                await _udpClient.ConnectAsync(host, port);
+                var endpoint = new IPEndPoint(IPAddress.Parse(host), port);
+                await ((Socket)_udpClient.Client).ConnectAsync(endpoint);
+
+                _tcpClient = new TcpClient();
+                await _tcpClient.ConnectAsync(host, port);
 
                 _ = StartPacketReceiving();
                 _ = StartMaintenanceLoop();
 
                 _logger.LogInformation($"Connected to {host}:{port}");
+                
+                // Wait for connection to establish
+                await Task.Delay(100);
             }
             catch (Exception ex)
             {
@@ -76,6 +86,8 @@ namespace RemoteDesktopCommon.Protocol
 
         public async Task SendPacket(Packet packet)
         {
+            ArgumentNullException.ThrowIfNull(packet);
+
             try
             {
                 if (_useTcpFallback)
@@ -96,7 +108,10 @@ namespace RemoteDesktopCommon.Protocol
                 }
 
                 byte[] data = PacketSerializer.Serialize(packet);
-                await _udpClient.SendAsync(data, data.Length);
+                if (_udpClient != null)
+                {
+                    await _udpClient.SendAsync(data);
+                }
             }
             catch (Exception ex)
             {
@@ -107,6 +122,8 @@ namespace RemoteDesktopCommon.Protocol
 
         private async Task SendViaTcp(Packet packet)
         {
+            ArgumentNullException.ThrowIfNull(packet);
+
             try
             {
                 if (_tcpClient?.Connected != true)
@@ -118,9 +135,9 @@ namespace RemoteDesktopCommon.Protocol
                 byte[] data = PacketSerializer.Serialize(packet);
                 byte[] lengthPrefix = BitConverter.GetBytes(data.Length);
 
-                NetworkStream stream = _tcpClient.GetStream();
-                await stream.WriteAsync(lengthPrefix, 0, lengthPrefix.Length);
-                await stream.WriteAsync(data, 0, data.Length);
+                NetworkStream? stream = _tcpClient.GetStream();
+                await stream.WriteAsync(lengthPrefix);
+                await stream.WriteAsync(data);
             }
             catch (Exception ex)
             {
@@ -131,20 +148,28 @@ namespace RemoteDesktopCommon.Protocol
 
         private async Task StartPacketReceiving()
         {
+            if (_udpClient == null) return;
+
             while (!_cancellationTokenSource.Token.IsCancellationRequested)
             {
                 try
                 {
-                    UdpReceiveResult result = await _udpClient.ReceiveAsync();
+                    UdpReceiveResult result = await _udpClient.ReceiveAsync(_cancellationTokenSource.Token);
                     var packet = PacketSerializer.Deserialize(result.Buffer);
-
-                    if (packet.RequiresAck)
+                    if (packet != null)
                     {
-                        await SendAcknowledgement(packet.SequenceNumber, result.RemoteEndPoint);
-                    }
+                        if (packet.RequiresAck)
+                        {
+                            await SendAcknowledgement(packet.SequenceNumber, result.RemoteEndPoint);
+                        }
 
-                    UpdatePacketLossRate();
-                    PacketReceived?.Invoke(this, packet);
+                        UpdatePacketLossRate();
+                        PacketReceived?.Invoke(this, packet);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
                 }
                 catch (Exception ex)
                 {
@@ -155,12 +180,18 @@ namespace RemoteDesktopCommon.Protocol
 
         private async Task StartTcpAcceptLoop()
         {
+            if (_tcpListener == null) return;
+
             while (!_cancellationTokenSource.Token.IsCancellationRequested)
             {
                 try
                 {
-                    TcpClient client = await _tcpListener.AcceptTcpClientAsync();
+                    TcpClient client = await _tcpListener.AcceptTcpClientAsync(_cancellationTokenSource.Token);
                     _ = HandleTcpClient(client);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
                 }
                 catch (Exception ex)
                 {
@@ -171,6 +202,8 @@ namespace RemoteDesktopCommon.Protocol
 
         private async Task HandleTcpClient(TcpClient client)
         {
+            ArgumentNullException.ThrowIfNull(client);
+
             try
             {
                 NetworkStream stream = client.GetStream();
@@ -178,14 +211,17 @@ namespace RemoteDesktopCommon.Protocol
 
                 while (!_cancellationTokenSource.Token.IsCancellationRequested)
                 {
-                    await stream.ReadAsync(lengthBuffer, 0, 4);
+                    await stream.ReadAsync(lengthBuffer, 0, 4, _cancellationTokenSource.Token);
                     int length = BitConverter.ToInt32(lengthBuffer, 0);
 
                     byte[] packetData = new byte[length];
-                    await stream.ReadAsync(packetData, 0, length);
+                    await stream.ReadAsync(packetData, 0, length, _cancellationTokenSource.Token);
 
                     var packet = PacketSerializer.Deserialize(packetData);
-                    PacketReceived?.Invoke(this, packet);
+                    if (packet != null)
+                    {
+                        PacketReceived?.Invoke(this, packet);
+                    }
                 }
             }
             catch (Exception ex)
@@ -207,7 +243,11 @@ namespace RemoteDesktopCommon.Protocol
                     CheckForTimeouts();
                     CheckPacketLossRate();
                     CleanupSessions();
-                    await Task.Delay(1000);
+                    await Task.Delay(1000, _cancellationTokenSource.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
                 }
                 catch (Exception ex)
                 {
@@ -234,7 +274,6 @@ namespace RemoteDesktopCommon.Protocol
 
         private void UpdatePacketLossRate()
         {
-            // Simple exponential moving average
             const double alpha = 0.1;
             int lostPackets = _pendingPackets.Count(p => p.Value.RetryCount > 0);
             int totalPackets = Math.Max(1, _pendingPackets.Count);
@@ -244,6 +283,8 @@ namespace RemoteDesktopCommon.Protocol
 
         private async Task SendAcknowledgement(int sequenceNumber, IPEndPoint endpoint)
         {
+            if (_udpClient == null) return;
+
             var ackPacket = new Packet
             {
                 Type = PacketType.Control,
@@ -252,7 +293,7 @@ namespace RemoteDesktopCommon.Protocol
             };
 
             byte[] data = PacketSerializer.Serialize(ackPacket);
-            await _udpClient.SendAsync(data, data.Length, endpoint);
+            await _udpClient.SendAsync(data, endpoint);
         }
 
         private void CheckForTimeouts()
@@ -297,20 +338,21 @@ namespace RemoteDesktopCommon.Protocol
             _udpClient?.Close();
             _tcpListener?.Stop();
             _tcpClient?.Close();
+            _cancellationTokenSource.Dispose();
         }
 
         private class PendingPacket
         {
-            public Packet Packet { get; set; }
+            public required Packet Packet { get; set; }
             public DateTime Timestamp { get; set; }
             public int RetryCount { get; set; }
         }
 
         private class SessionState
         {
-            public string SessionId { get; set; }
+            public required string SessionId { get; set; }
             public DateTime LastActivity { get; set; }
-            public IPEndPoint EndPoint { get; set; }
+            public required IPEndPoint EndPoint { get; set; }
         }
     }
 
@@ -320,10 +362,10 @@ namespace RemoteDesktopCommon.Protocol
         {
             // Implementation would use a binary serialization format
             // This is a placeholder - actual implementation would need proper serialization
-            return null;
+            return Array.Empty<byte>();
         }
 
-        public static Packet Deserialize(byte[] data)
+        public static Packet? Deserialize(byte[] data)
         {
             // Implementation would use a binary deserialization format
             // This is a placeholder - actual implementation would need proper deserialization
