@@ -1,0 +1,6 @@
+C:\Users\venzo\OneDrive\Documents\Dev\RemoteApp\RemoteDesktopServer\obj\Debug\net8.0\RemoteDesktopServer.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\venzo\OneDrive\Documents\Dev\RemoteApp\RemoteDesktopServer\obj\Debug\net8.0\RemoteDesktopServer.AssemblyInfoInputs.cache
+C:\Users\venzo\OneDrive\Documents\Dev\RemoteApp\RemoteDesktopServer\obj\Debug\net8.0\RemoteDesktopServer.AssemblyInfo.cs
+C:\Users\venzo\OneDrive\Documents\Dev\RemoteApp\RemoteDesktopServer\obj\Debug\net8.0\RemoteDesktopServer.csproj.CoreCompileInputs.cache
+C:\Users\venzo\OneDrive\Documents\Dev\RemoteApp\RemoteDesktopServer\obj\Debug\net8.0\RemoteDesktopServer.sourcelink.json
+C:\Users\venzo\OneDrive\Documents\Dev\RemoteApp\RemoteDesktopServer\obj\Debug\net8.0\RemoteDesktopServer.csproj.AssemblyReference.cache

@@ -1,0 +1,105 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\venzo\\OneDrive\\Documents\\Dev\\RemoteApp\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{07958657-B5F7-C713-A0B5-79F8DF203796}|RemoteDesktopCommon\\RemoteDesktopCommon.csproj|c:\\users\\venzo\\onedrive\\documents\\dev\\remoteapp\\remotedesktopcommon\\protocol\\reliableudpprotocol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07958657-B5F7-C713-A0B5-79F8DF203796}|RemoteDesktopCommon\\RemoteDesktopCommon.csproj|solutionrelative:remotedesktopcommon\\protocol\\reliableudpprotocol.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{07958657-B5F7-C713-A0B5-79F8DF203796}|RemoteDesktopCommon\\RemoteDesktopCommon.csproj|c:\\users\\venzo\\onedrive\\documents\\dev\\remoteapp\\remotedesktopcommon\\security\\authenticationmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07958657-B5F7-C713-A0B5-79F8DF203796}|RemoteDesktopCommon\\RemoteDesktopCommon.csproj|solutionrelative:remotedesktopcommon\\security\\authenticationmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B776B1BE-D4F6-48BE-941B-9783EFEA92C2}|RemoteDesktopServer\\RemoteDesktopServer.csproj|c:\\users\\venzo\\onedrive\\documents\\dev\\remoteapp\\remotedesktopserver\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B776B1BE-D4F6-48BE-941B-9783EFEA92C2}|RemoteDesktopServer\\RemoteDesktopServer.csproj|solutionrelative:remotedesktopserver\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B8F40E9E-8CCE-4615-879B-C458859DA6E8}|RemoteDesktopClient\\RemoteDesktopClient.csproj|c:\\users\\venzo\\onedrive\\documents\\dev\\remoteapp\\remotedesktopclient\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B8F40E9E-8CCE-4615-879B-C458859DA6E8}|RemoteDesktopClient\\RemoteDesktopClient.csproj|solutionrelative:remotedesktopclient\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{07958657-B5F7-C713-A0B5-79F8DF203796}|RemoteDesktopCommon\\RemoteDesktopCommon.csproj|c:\\users\\venzo\\onedrive\\documents\\dev\\remoteapp\\remotedesktopcommon\\config\\configwatcher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{07958657-B5F7-C713-A0B5-79F8DF203796}|RemoteDesktopCommon\\RemoteDesktopCommon.csproj|solutionrelative:remotedesktopcommon\\config\\configwatcher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ReliableUdpProtocol.cs",
+              "DocumentMoniker": "C:\\Users\\venzo\\OneDrive\\Documents\\Dev\\RemoteApp\\RemoteDesktopCommon\\Protocol\\ReliableUdpProtocol.cs",
+              "RelativeDocumentMoniker": "RemoteDesktopCommon\\Protocol\\ReliableUdpProtocol.cs",
+              "ToolTip": "C:\\Users\\venzo\\OneDrive\\Documents\\Dev\\RemoteApp\\RemoteDesktopCommon\\Protocol\\ReliableUdpProtocol.cs",
+              "RelativeToolTip": "RemoteDesktopCommon\\Protocol\\ReliableUdpProtocol.cs",
+              "ViewState": "AgIAADMAAAAAAAAAAADwvz4AAAA6AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-11T17:23:42.624Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "AuthenticationManager.cs",
+              "DocumentMoniker": "C:\\Users\\venzo\\OneDrive\\Documents\\Dev\\RemoteApp\\RemoteDesktopCommon\\Security\\AuthenticationManager.cs",
+              "RelativeDocumentMoniker": "RemoteDesktopCommon\\Security\\AuthenticationManager.cs",
+              "ToolTip": "C:\\Users\\venzo\\OneDrive\\Documents\\Dev\\RemoteApp\\RemoteDesktopCommon\\Security\\AuthenticationManager.cs",
+              "RelativeToolTip": "RemoteDesktopCommon\\Security\\AuthenticationManager.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-11T17:23:16.015Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "ConfigWatcher.cs",
+              "DocumentMoniker": "C:\\Users\\venzo\\OneDrive\\Documents\\Dev\\RemoteApp\\RemoteDesktopCommon\\Config\\ConfigWatcher.cs",
+              "RelativeDocumentMoniker": "RemoteDesktopCommon\\Config\\ConfigWatcher.cs",
+              "ToolTip": "C:\\Users\\venzo\\OneDrive\\Documents\\Dev\\RemoteApp\\RemoteDesktopCommon\\Config\\ConfigWatcher.cs",
+              "RelativeToolTip": "RemoteDesktopCommon\\Config\\ConfigWatcher.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-11T17:16:53.797Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\venzo\\OneDrive\\Documents\\Dev\\RemoteApp\\RemoteDesktopServer\\Program.cs",
+              "RelativeDocumentMoniker": "RemoteDesktopServer\\Program.cs",
+              "ToolTip": "C:\\Users\\venzo\\OneDrive\\Documents\\Dev\\RemoteApp\\RemoteDesktopServer\\Program.cs",
+              "RelativeToolTip": "RemoteDesktopServer\\Program.cs",
+              "ViewState": "AgIAABkAAAAAAAAAAAAgwB8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-11T17:15:00.772Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\venzo\\OneDrive\\Documents\\Dev\\RemoteApp\\RemoteDesktopClient\\Program.cs",
+              "RelativeDocumentMoniker": "RemoteDesktopClient\\Program.cs",
+              "ToolTip": "C:\\Users\\venzo\\OneDrive\\Documents\\Dev\\RemoteApp\\RemoteDesktopClient\\Program.cs",
+              "RelativeToolTip": "RemoteDesktopClient\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-11T17:00:25.166Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

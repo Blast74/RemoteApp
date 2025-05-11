@@ -12,7 +12,7 @@ namespace RemoteDesktopCommon.Protocol
     public class ReliableUdpProtocol : IDisposable
     {
         private readonly ILogger<ReliableUdpProtocol> _logger;
-        private readonly UdpClient _udpClient;
+        private UdpClient _udpClient;
         private readonly ConcurrentDictionary<int, PendingPacket> _pendingPackets;
         private readonly ConcurrentDictionary<string, SessionState> _sessions;
         private readonly CancellationTokenSource _cancellationTokenSource;
