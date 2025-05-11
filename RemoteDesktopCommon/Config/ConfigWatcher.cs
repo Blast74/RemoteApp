@@ -13,26 +13,28 @@ namespace RemoteDesktopCommon.Config
         private readonly string _configPath;
         private readonly FileSystemWatcher _watcher;
         private readonly SemaphoreSlim _reloadLock;
-        private AppSettings _currentSettings;
+        private AppSettings? _currentSettings;
         private readonly Timer _validationTimer;
         private bool _isReloading;
 
-        public event EventHandler<AppSettings> ConfigurationChanged;
-        public event EventHandler<Exception> ConfigurationError;
+        public event EventHandler<AppSettings>? ConfigurationChanged;
+        public event EventHandler<Exception>? ConfigurationError;
 
-        public AppSettings CurrentSettings => _currentSettings;
+        public AppSettings CurrentSettings => _currentSettings ?? throw new InvalidOperationException("Settings not initialized");
 
         public ConfigWatcher(ILogger<ConfigWatcher> logger, string configPath)
         {
-            _logger = logger;
-            _configPath = configPath;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configPath = configPath ?? throw new ArgumentNullException(nameof(configPath));
             _reloadLock = new SemaphoreSlim(1, 1);
+            
+            var directory = Path.GetDirectoryName(_configPath) ?? throw new ArgumentException("Invalid config path", nameof(configPath));
             
             // Initialize file system watcher
             _watcher = new FileSystemWatcher
             {
-                Path = Path.GetDirectoryName(configPath),
-                Filter = Path.GetFileName(configPath),
+                Path = directory,
+                Filter = Path.GetFileName(_configPath),
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime
             };
 
@@ -95,8 +97,9 @@ namespace RemoteDesktopCommon.Config
 
         private void OnWatcherError(object sender, ErrorEventArgs e)
         {
-            _logger.LogError(e.GetException(), "File system watcher error");
-            ConfigurationError?.Invoke(this, e.GetException());
+            var exception = e.GetException();
+            _logger.LogError(exception, "File system watcher error");
+            ConfigurationError?.Invoke(this, exception);
         }
 
         private async Task ReloadConfiguration()
@@ -144,7 +147,10 @@ namespace RemoteDesktopCommon.Config
                 ConfigurationChanged?.Invoke(this, newSettings);
 
                 // Log significant changes
-                LogConfigurationChanges(oldSettings, newSettings);
+                if (oldSettings != null)
+                {
+                    LogConfigurationChanges(oldSettings, newSettings);
+                }
             }
             catch (Exception ex)
             {
@@ -155,10 +161,6 @@ namespace RemoteDesktopCommon.Config
 
         private void LogConfigurationChanges(AppSettings oldSettings, AppSettings newSettings)
         {
-            if (oldSettings == null)
-                return;
-
-            // Compare and log significant changes
             if (oldSettings.Network.Port != newSettings.Network.Port)
                 _logger.LogInformation($"Network port changed from {oldSettings.Network.Port} to {newSettings.Network.Port}");
 
@@ -169,7 +171,7 @@ namespace RemoteDesktopCommon.Config
                 _logger.LogInformation($"Target FPS changed from {oldSettings.Stream.TargetFps} to {newSettings.Stream.TargetFps}");
         }
 
-        private void ValidateConfiguration(object state)
+        private void ValidateConfiguration(object? state)
         {
             try
             {
@@ -221,9 +223,9 @@ namespace RemoteDesktopCommon.Config
 
         public void Dispose()
         {
-            _watcher?.Dispose();
-            _reloadLock?.Dispose();
-            _validationTimer?.Dispose();
+            _watcher.Dispose();
+            _reloadLock.Dispose();
+            _validationTimer.Dispose();
         }
     }
 }
